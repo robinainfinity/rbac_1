@@ -6,14 +6,14 @@ export const checkPermission = (permission) => {
     try {
       const { role } = req.user;
 
-      // If no role, deny access immediately
+      
       if (!role) {
         return res
           .status(403)
           .json({ error: "User role is missing in the token" });
       }
 
-      // Fetch permissions for the role from the database
+      
       const [results] = await pool.query(
         `SELECT p.name AS permission
          FROM permissions p
@@ -23,17 +23,17 @@ export const checkPermission = (permission) => {
         [role]
       );
 
-      // Map the result to a Set of permissions for faster lookup
+      
       const rolePermissions = new Set(results.map((row) => row.permission));
 
-      // Check if the required permission exists in the Set
+     
       if (!rolePermissions.has(permission)) {
         return res.status(403).json({
           error: `Access denied: missing '${permission}' permission`,
         });
       }
 
-      // Permission is valid; proceed to the next middleware or controller
+      
       next();
     } catch (error) {
       console.error("RBAC middleware error:", error);
