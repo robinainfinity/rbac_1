@@ -4,9 +4,9 @@ import pool from "../models/db.js";
 export const checkPermission = (permission) => {
   return async (req, res, next) => {
     try {
-   
       const { role } = req.user;
 
+      // If no role, deny access immediately
       if (!role) {
         return res
           .status(403)
@@ -16,23 +16,21 @@ export const checkPermission = (permission) => {
       // Fetch permissions for the role from the database
       const [results] = await pool.query(
         `SELECT p.name AS permission
-                 FROM permissions p
-                 JOIN role_permissions rp ON p.id = rp.permission_id
-                 JOIN roles r ON rp.role_id = r.id
-                 WHERE r.name = ?`,
+         FROM permissions p
+         JOIN role_permissions rp ON p.id = rp.permission_id
+         JOIN roles r ON rp.role_id = r.id
+         WHERE r.name = ?`,
         [role]
       );
 
-      // Extract permissions into an array
-      const rolePermissions = results.map((row) => row.permission);
+      // Map the result to a Set of permissions for faster lookup
+      const rolePermissions = new Set(results.map((row) => row.permission));
 
-      // Check if the required permission exists
-      if (!rolePermissions.includes(permission)) {
-        return res
-          .status(403)
-          .json({
-            error: `Access denied: missing '${permission}' permission`,
-          });
+      // Check if the required permission exists in the Set
+      if (!rolePermissions.has(permission)) {
+        return res.status(403).json({
+          error: `Access denied: missing '${permission}' permission`,
+        });
       }
 
       // Permission is valid; proceed to the next middleware or controller

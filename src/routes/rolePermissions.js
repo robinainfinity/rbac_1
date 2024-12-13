@@ -4,7 +4,7 @@ import {
   getPermissionsByRole,
 } from "../controllers/rolePermissionsControllers.js";
 import { checkPermission } from "../middleware/rbac.js";
-import { authenticateToken } from "../controllers/userControllers.js";
+import { authenticateToken } from "../controllers/usercontrollers.js";
 const router = express.Router();
 
 // Role-permission management

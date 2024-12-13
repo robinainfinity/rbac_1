@@ -273,3 +273,145 @@ paths:
           description: Invalid request
         '404':
           description: User or role not found
+ 
+  /users/forgot-password:
+    post:
+      summary: write your email
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: example@gmail.com
+                
+      responses:
+        '200':
+          description: password reset email sent successfully
+        '400':
+          description: Email is required
+        '404':
+          description: User with this email does not exist
+        '500':
+          description: Failed to send password reset email
+  
+  /users/reset-password:
+    post:
+      summary: Reset user password with the reset token
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                newPassword:
+                  type: string
+                  example: "newPassword123"
+      responses:
+        '200':
+          description: Password reset successfully
+        '400':
+          description: Token and new password are required
+        '404':
+          description: User not found
+        '500':
+          description: Failed to reset password
+        '400':
+          description: Reset token expired or invalid
+  /users/delete-user:
+    delete:
+      summary: Delete a user by email
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: john.doe@example.com
+      responses:
+        '200':
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User with email 'john.doe@example.com' deleted successfully."
+        '400':
+          description: Email is required
+        '404':
+          description: User with this email does not exist
+        '500':
+          description: Failed to delete user
+  /users/update-user:
+    put:
+      summary: Update user details
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: john.doe@example.com
+                username:
+                  type: string
+                  example: robina
+                password:
+                  type: string
+                  example: 123
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "User details updated successfully"
+                  user:
+                    type: object
+                    properties:
+                      username:
+                        type: string
+                        example: robina
+                      email:
+                        type: string
+                        example: john.doe@example.com
+                      role:
+                        type: string
+                        example: admin
+        '400':
+          description: Invalid request or user not found
+        '404':
+          description: User not found
+        '500':
+          description: Internal server error
+  

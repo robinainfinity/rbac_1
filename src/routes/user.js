@@ -6,7 +6,9 @@ import {
   assignRoleToUser,
   authenticateToken,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  deleteUser,
+  updateUser
 } from "../controllers/usercontrollers.js";
 import { checkPermission } from "../middleware/rbac.js";
 
@@ -26,4 +28,6 @@ router.get("/getallusers",authenticateToken,checkPermission('read_users'), getUs
 
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
+router.delete("/delete-user",authenticateToken,checkPermission('delete_users'), deleteUser);
+router.put("/update-user",authenticateToken,updateUser)
 export default router;

@@ -16,6 +16,18 @@ export const createUser = async (req, res) => {
   }
 
   try {
+    // Check if the email already exists
+    const [existingUser] = await pool.query(
+      "SELECT id FROM users WHERE email = ?",
+      [email]
+    );
+
+    if (existingUser.length > 0) {
+      return res
+        .status(400)
+        .json({ error: "A user with this email already exists" });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const [result] = await pool.query(
@@ -32,11 +44,6 @@ export const createUser = async (req, res) => {
       },
     });
   } catch (error) {
-    if (error.code === "ER_DUP_ENTRY") {
-      return res
-        .status(400)
-        .json({ error: "A user with this email already exists" });
-    }
     res.status(500).json({ error: "Failed to create user" });
   }
 };
@@ -258,5 +265,99 @@ export const resetPassword = async (req, res) => {
       return res.status(400).json({ error: "Reset token has expired" });
     }
     res.status(500).json({ error: "Failed to reset password" });
+  }
+};
+// Delete a user
+export const deleteUser = async (req, res) => {
+  const { email } = req.body; // Expecting the user's email in the request body
+
+  if (!email) {
+    return res.status(400).json({ error: "Email is required" });
+  }
+
+  try {
+    // Check if the user exists
+    const [userResult] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
+
+    if (userResult.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Delete the user
+    await pool.query("DELETE FROM users WHERE email = ?", [email]);
+
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to delete user" });
+  }
+};
+
+
+// Update user details
+export const updateUser = async (req, res) => {
+  const { username, email, password } = req.body;
+  const userId = req.user.id; // From the authenticateToken middleware
+
+  try {
+    // Fetch the existing user from the database
+    const [userResult] = await pool.query("SELECT * FROM users WHERE id = ?", [
+      userId,
+    ]);
+
+    if (userResult.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    const user = userResult[0];
+
+    // Check if a new email is provided and if it's different from the current email
+    if (email && email !== user.email) {
+      const [emailExists] = await pool.query(
+        "SELECT id FROM users WHERE email = ?",
+        [email]
+      );
+      if (emailExists.length > 0) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Email already in use" });
+      }
+      user.email = email; // Update email
+    }
+
+    // Update password if provided
+    if (password) {
+      const hashedPassword = await bcryptjs.hash(password, 10);
+      user.password = hashedPassword; // Update password
+    }
+
+    // Update username if provided
+    if (username) {
+      user.username = username; // Update username
+    }
+
+    // Update the user in the database
+    await pool.query(
+      "UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?",
+      [user.username, user.email, user.password, userId]
+    );
+
+    // Respond with the updated user details
+    return res.status(200).json({
+      success: true,
+      message: "User details updated successfully",
+      user: {
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error("updateUser error", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
   }
 };
